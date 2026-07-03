@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "endstone-mediaplayer-ui"
+version = "0.1.0"
+description = "Form-based GUI for the MediaPlayer NBS plugin"
+requires-python = ">=3.10"
+
+[project.entry-points."endstone"]
+mediaplayer-ui = "endstone_mediaplayer_ui:MediaPlayerUI"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["I", "E", "F"]
