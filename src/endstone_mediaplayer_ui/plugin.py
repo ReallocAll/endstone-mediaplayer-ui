@@ -47,7 +47,7 @@ class MediaPlayerUI(Plugin):
     def on_command(self, sender, command, args) -> bool:
         if command.name == "mpg":
             if not isinstance(sender, Player):
-                sender.send_message("\u00a7cPlayer only.")
+                sender.send_message("\u00a7c[MediaPlayer] This command requires a player")
                 return True
             self._show_main(sender)
         return True
@@ -81,7 +81,7 @@ class MediaPlayerUI(Plugin):
     def _show_songs(self, player: Player):
         files = _list_nbs()
         if not files:
-            player.send_message("\u00a7cNo .nbs files found in nbs/ folder.")
+            player.send_message("\u00a7c[MediaPlayer] No .nbs files!")
             return
 
         form = ActionForm()
@@ -93,8 +93,6 @@ class MediaPlayerUI(Plugin):
 
         def on_submit(s, idx):
             self.server.dispatch_command(s, f"mpm add {idx} 1 3")
-            stem = os.path.splitext(files[idx])[0]
-            s.send_message(f"\u00a7a[MediaPlayer] Queued: \u00a7e{stem}")
 
         form.on_submit = on_submit
         player.send_form(form)
