@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      artifact:
+        description: 'Upload to artifact'
+        required: false
+        default: true
+        type: boolean
+      release:
+        description: 'Create a release'
+        required: false
+        default: true
+        type: boolean
+      pre_release:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+      rel_tag:
+        description: 'Release tag (e.g. 0.2.0)'
+        required: false
+        default: ''
+        type: string
+      rel_title:
+        description: 'Release title'
+        required: false
+        default: ''
+        type: string
+      rel_desc:
+        description: 'Release description'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set release info
+        id: rel_info
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+            echo "title=v$TAG" >> $GITHUB_OUTPUT
+            {
+              echo "desc_body<<EOF"
+              git log -1 --pretty=%B
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          else
+            echo "tag_name=${{ inputs.rel_tag }}" >> $GITHUB_OUTPUT
+            if [ -z "${{ inputs.rel_title }}" ]; then
+              echo "title=v${{ inputs.rel_tag }}" >> $GITHUB_OUTPUT
+            else
+              echo "title=${{ inputs.rel_title }}" >> $GITHUB_OUTPUT
+            fi
+            if [ -z "${{ inputs.rel_desc }}" ]; then
+              {
+                echo "desc_body<<EOF"
+                git log -1 --pretty=%B
+                echo "EOF"
+              } >> $GITHUB_OUTPUT
+            else
+              echo "desc_body=${{ inputs.rel_desc }}" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Build wheel
+        run: |
+          pip install build
+          python -m build --wheel
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        if: github.event_name == 'push' || inputs.artifact
+        with:
+          name: endstone_mediaplayer_ui
+          path: dist/*.whl
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3.0.1
+        if: github.event_name == 'push' || inputs.release
+        with:
+          tag_name: v${{ steps.rel_info.outputs.tag_name }}
+          name: ${{ steps.rel_info.outputs.title }}
+          prerelease: ${{ github.event_name == 'push' && false || inputs.pre_release }}
+          body: ${{ steps.rel_info.outputs.desc_body }}
+          files: dist/*.whl
