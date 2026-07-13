@@ -9,11 +9,19 @@ from endstone.plugin import Plugin
 NBS_DIR = "plugins/endstone_mediaplayer/nbs"
 
 
+def _safe_decode(name: str) -> str:
+    """Decode surrogateescape-encoded filename back to proper UTF-8."""
+    try:
+        return name.encode("utf-8", "surrogateescape").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return name
+
+
 def _list_nbs():
     """Scan nbs/ directory. os.listdir on Windows uses FindFirstFile
     internally, producing the same NTFS order as the C plugin."""
     try:
-        return [f for f in os.listdir(NBS_DIR) if f.lower().endswith(".nbs")]
+        return [_safe_decode(f) for f in os.listdir(NBS_DIR) if f.lower().endswith(".nbs")]
     except FileNotFoundError:
         return []
 
