@@ -2,6 +2,7 @@
 
 import json
 import os
+import random
 
 from endstone import Player
 from endstone.form import ActionForm, Dropdown, ModalForm, TextInput
@@ -104,9 +105,11 @@ class MediaPlayerUI(Plugin):
         form.title = "§l§a媒体播放器§r"
         form.content = "请选择要执行的操作："
         form.add_button("§l§a点歌§r\n搜索并直接播放歌曲")
+        form.add_button("§l§d随机播放§r\n从曲库随机选择一首")
         form.add_button(
             f"§l§b点歌设置§r\n当前：{self._settings_summary(player)}"
         )
+        form.add_button("§l§6公共影音§r\n控制附近地图屏幕的视频与音乐")
         form.add_button("§e暂停播放")
         form.add_button("§a继续播放")
         form.add_button("§c停止播放§r\n同时清空播放队列")
@@ -117,15 +120,58 @@ class MediaPlayerUI(Plugin):
                 case 0:
                     self._show_songs(s)
                 case 1:
-                    self._show_play_settings(s)
+                    self._play_random_song(s)
                 case 2:
-                    self.server.dispatch_command(s, "mpm pause")
+                    self._show_play_settings(s)
                 case 3:
-                    self.server.dispatch_command(s, "mpm resume")
+                    self._show_public_media(s)
                 case 4:
-                    self.server.dispatch_command(s, "mpm stop")
+                    self.server.dispatch_command(s, "mpm pause")
                 case 5:
+                    self.server.dispatch_command(s, "mpm resume")
+                case 6:
+                    self.server.dispatch_command(s, "mpm stop")
+                case 7:
                     self.server.dispatch_command(s, "mpm playlist")
+
+        form.on_submit = on_submit
+        player.send_form(form)
+
+    def _play_random_song(self, player: Player) -> None:
+        files = _list_nbs()
+        if not files:
+            player.send_message("§c[MediaPlayer] 没有找到 .nbs 音乐文件。")
+            return
+
+        song_index = random.randrange(len(files))
+        loop, bar = self._get_play_settings(player)
+        player.send_message(
+            f"§a[MediaPlayer] 随机选择：§e{_song_title(files[song_index])}"
+        )
+        self._enqueue(player, song_index, loop, bar)
+
+    def _show_public_media(self, player: Player):
+        form = ActionForm()
+        form.title = "§l§6公共影音§r"
+        form.content = (
+            "控制是否接收附近公共地图屏幕的视频与音乐。\n"
+            "此设置只影响你自己的观看体验。"
+        )
+        form.add_button("§l§a开启公共影音§r\n接收附近屏幕的视频与音乐")
+        form.add_button("§l§c关闭公共影音§r\n停止接收附近屏幕的视频与音乐")
+        form.add_button("§l§e查看当前状态§r\n结果显示在聊天栏")
+        form.add_button("返回主菜单")
+
+        def on_submit(s, idx):
+            match idx:
+                case 0:
+                    self.server.dispatch_command(s, "mpv watch on")
+                case 1:
+                    self.server.dispatch_command(s, "mpv watch off")
+                case 2:
+                    self.server.dispatch_command(s, "mpv watch")
+                case 3:
+                    self._show_main(s)
 
         form.on_submit = on_submit
         player.send_form(form)
