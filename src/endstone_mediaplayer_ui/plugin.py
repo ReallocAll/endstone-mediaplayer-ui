@@ -174,7 +174,9 @@ class MediaPlayerUI(Plugin):
         form.on_submit = on_submit
         player.send_form(form)
 
-    def _show_song_options(\n        self, player: Player, song_index: int, filename: str, query: str = ""\n    ):
+    def _show_song_options(
+        self, player: Player, song_index: int, filename: str, query: str = ""
+    ):
         title = _song_title(filename)
         form = ActionForm()
         form.title = "§l§a播放方式§r"
@@ -193,7 +195,7 @@ class MediaPlayerUI(Plugin):
                 case 2:
                     self._show_custom_play(s, song_index, filename)
                 case 3:
-                    self._show_songs(s)
+                    self._show_songs(s, query)
 
         form.on_submit = on_submit
         player.send_form(form)
