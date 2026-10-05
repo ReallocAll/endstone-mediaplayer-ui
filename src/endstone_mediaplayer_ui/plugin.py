@@ -143,7 +143,7 @@ class MediaPlayerUI(Plugin):
             song_pos = idx - song_offset
             if 0 <= song_pos < len(visible):
                 song_index, filename = visible[song_pos]
-                self._show_song_options(s, song_index, filename)
+                self._show_song_options(s, song_index, filename, query.strip())
             elif idx == back_index:
                 self._show_main(s)
 
@@ -174,7 +174,7 @@ class MediaPlayerUI(Plugin):
         form.on_submit = on_submit
         player.send_form(form)
 
-    def _show_song_options(self, player: Player, song_index: int, filename: str):
+    def _show_song_options(\n        self, player: Player, song_index: int, filename: str, query: str = ""\n    ):
         title = _song_title(filename)
         form = ActionForm()
         form.title = "§l§a播放方式§r"
